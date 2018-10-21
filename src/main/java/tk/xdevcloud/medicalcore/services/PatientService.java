@@ -1,58 +1,127 @@
 package tk.xdevcloud.medicalcore.services;
 
 import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
-import javax.persistence.Query;
 import javax.persistence.EntityTransaction;
-
 import tk.xdevcloud.medicalcore.models.Patient;
-
 import java.util.List;
 
 public class PatientService {
 
-    private static EntityManagerFactory emFactory = Persistence.createEntityManagerFactory("medicaldb");
-    private static EntityManager entityManager = emFactory.createEntityManager();
-
-
-    public static boolean add(Patient patient) {
-
-        EntityTransaction transaction = null;
+    
+    private EntityManager entityManager;
+    public PatientService(EntityManager entityManager) {
+    	
+    	   this.entityManager = entityManager;
+    }
+    /**
+     * 
+     * @param patient
+     * @return
+     */
+    public boolean add(Patient patient) {
+    	
+        EntityTransaction tx = null;
         try {
-            transaction = entityManager.getTransaction();
-            transaction.begin();
+            tx = entityManager.getTransaction();
+            tx.begin();
             entityManager.persist(patient);
-
-            transaction.commit();
+            tx.commit();
         } catch (Exception e) {
 
-            transaction.rollback();
+            tx.rollback();
             return false;
         }
-
-
         return true;
+    }
+    
+    /**
+     * 
+     * @param Patient p
+     * @param Integer id
+     * @return bool
+     * @throws Exception 
+     */
 
+    public boolean update(Patient p,Integer id) throws Exception{
+    	
+    	Patient  patient =  (Patient)entityManager.find(Patient.class,id);
+    	 if(patient == null) {
+             
+         	throw new Exception("No Record found by that id");
+         }
+    	 EntityTransaction tx = null;
+    	 try 
+    	 {    
+    	      tx = entityManager.getTransaction();
+    	      tx.begin();
+    	      patient.setFirstName(p.getFirstName());
+    	      patient.setLastName(p.getLastName());
+    	      patient.setIdNumber(p.getIdNumber());
+    	      tx.commit();
+    	 
+    	 }
+    	 catch(Exception e ) {
+    		 
+    		 tx.rollback();
+    		 return false;
+    	 }
+    	 
+    	return true;
+    }
+    /**
+     * Gets a specific patient record
+     * @param id of the patient to view
+     * @return
+     * @throws Exception
+     */
+    public  Patient getPatient(Integer id) throws Exception {
+    	
+    	Patient patient  = (Patient)entityManager.find(Patient.class,id);
+        if(patient == null) {
+               
+        	throw new Exception("No Record found by that id");
+        }
+        return patient;
+    }
+    
+    
+    @SuppressWarnings("unchecked")
+	/**
+	 * returns a list of patients
+	 * @return List
+	 */
+    public  List<Patient> getPatients() {
+
+        return (List<Patient>)entityManager.createQuery("SELECT p FROM Patient p").getResultList();
 
     }
-
-    public static List<Patient> getPatients() {
-
-
-        Query query = entityManager.createQuery("SELECT p FROM patients p");
-        return query.getResultList();
-
-
-    }
-
-
-    public static boolean delete(String idNumber) {
-
-
-        Query query = entityManager.createNativeQuery("DELETE FROM patients WHERE id_number = :id");
-        query.setParameter("id", idNumber).executeUpdate();
-        return false;
+  
+    /**
+     * delete a specific patient
+     * @param uuid id of the specific patient
+     * @return bool
+     */
+    public  boolean delete(Integer uuid) throws Exception {
+    	
+    	Patient  patient =  (Patient)entityManager.find(Patient.class,uuid);
+    	 if(patient == null) {
+             
+         	throw new Exception("No Record found by that id");
+         }
+    	 EntityTransaction tx = entityManager.getTransaction();
+    	 try 
+    	 {    
+    	      tx.begin();
+    	      entityManager.remove(patient);
+    	      tx.commit();
+    	 
+    	 }
+    	 catch(Exception e ) {
+    		 
+    		 tx.rollback();
+    	 }
+    	 
+    	return true;
     }
 
 }

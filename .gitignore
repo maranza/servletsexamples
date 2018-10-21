@@ -6,3 +6,4 @@ app.iml
 .idea/workspace.xml
 .project
 .medicalcore
+.classpath

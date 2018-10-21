@@ -18,25 +18,19 @@ public class SecurityUtil {
             //generate secret key
             KeyGenerator keyGen = KeyGenerator.getInstance("AES");
             keyGen.init(1024);
-
             //set secure random
-
             SecureRandom random = new SecureRandom();
             byte randomBytes[] = new byte[20];
             random.nextBytes(randomBytes);
-
             SecretKey secretKey = keyGen.generateKey();
             cipher.init(Cipher.ENCRYPT_MODE, secretKey, random);
             cipher.update(data.getBytes());
             encryptedString = new String(cipher.doFinal());
 
-
         } catch (NoSuchAlgorithmException e) {
-
             e.printStackTrace();
 
         } catch (NoSuchPaddingException e) {
-
             e.printStackTrace();
 
         } catch (InvalidKeyException e) {
@@ -47,11 +41,8 @@ public class SecurityUtil {
 
             e.printStackTrace();
         } catch (BadPaddingException e) {
-
             e.printStackTrace();
         }
-
-
         return encryptedString;
 
     }

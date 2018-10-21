@@ -6,25 +6,23 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.servlet.ServletException;
 import java.io.IOException;
-
 import com.google.gson.*;
 import org.apache.log4j.Logger;
 
 public class AuthenticateServlet extends HttpServlet {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 4688675195513964816L;
 
-    private static Logger logger = Logger.getLogger(AuthenticateServlet.class.getName());
+	private static Logger logger = Logger.getLogger(AuthenticateServlet.class.getName());
 
     public void init() {
-
-
     }
-
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.setContentType("application/json");
-
-
         try {
 
             Gson json = new Gson();
@@ -44,19 +42,14 @@ public class AuthenticateServlet extends HttpServlet {
                 logger.info("Failed to authenticate ");
             }
 
-
         } catch (JsonSyntaxException e) {
 
             response.getWriter().println("{\"error\" : \"Failed to Parse Json\"}");
         } catch (Exception e) {
 
-
             response.getWriter().println("{\"error\" : \"System Error\"}");
             logger.info(e.getMessage());
-
-
         }
-
 
     }
 
