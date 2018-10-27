@@ -13,6 +13,7 @@ import tk.xdevcloud.medicalcore.services.PatientService;
 import org.apache.log4j.Logger;
 import com.google.gson.*;
 import javax.persistence.EntityManager;
+import java.util.UUID;
 
 public class PatientServlet extends HttpServlet {
 
@@ -32,12 +33,12 @@ public class PatientServlet extends HttpServlet {
 
 		// if no parameter was provided return all results
 		response.setContentType("application/json");
-		String id = request.getParameter("uuid");
+		String uuid = request.getParameter("uuid");
 		Gson json = new Gson();
 		try {
-			if (id != null) {
+			if (uuid != null) {
 
-				response.getWriter().println((json.toJson(service.getPatient(Integer.parseInt(id)))));
+				response.getWriter().println((json.toJson(service.getPatient(UUID.fromString(uuid)))));
 
 			} else {
 
@@ -69,9 +70,9 @@ public class PatientServlet extends HttpServlet {
 			patient.setFirstName(firstName);
 			patient.setLastName(lastName);
 			patient.setIdNumber(IdNumber);
-			String requestType = request.getParameter("action");
+			String uuid = request.getParameter("uuid");
 			// if requestType is update then modify the specific record
-			if (requestType == null ) {
+			if (uuid == null ) {
 
 				if (service.add(patient)) {
 					response.getWriter().println("{\"msg\":\"Captured\"}");
@@ -81,10 +82,9 @@ public class PatientServlet extends HttpServlet {
 					response.getWriter().println("{\"msg\":\"Failed to Capture Record\"}");
 
 				}
-			} else if (requestType.equals("update")) {
-
-				Integer id = jsonObject.get("id").getAsInt();
-				if (service.update(patient, id)) {
+			} else {
+				
+				if (service.update(patient, UUID.fromString(uuid))) {
 
 					response.getWriter().println("{\"msg\":\"Updated\"}");
 				} else {
@@ -94,10 +94,7 @@ public class PatientServlet extends HttpServlet {
 				}
 
 			}
-			else {
-				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-				response.getWriter().println("{\"msg\":\"Method Uknown\"}");
-			}
+			
 
 		} catch (JsonSyntaxException e) {
 			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -117,11 +114,11 @@ public class PatientServlet extends HttpServlet {
 			throws ServletException, IOException {
 		
 		response.setContentType("application/json");
-		String id = request.getParameter("uuid");
+		String uuid = request.getParameter("uuid");
 		try {
-			if (id != null) {
+			if (uuid != null) {
 
-				if (service.delete(Integer.parseInt(id))) {
+				if (service.delete(UUID.fromString(uuid))) {
 
 					response.getWriter().println("{\"msg\":\"Deleted\"}");
 				}

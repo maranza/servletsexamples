@@ -4,7 +4,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
 import tk.xdevcloud.medicalcore.models.Patient;
 import java.util.List;
-
+import java.util.UUID;
 public class PatientService {
 
     
@@ -37,14 +37,14 @@ public class PatientService {
     /**
      * 
      * @param Patient p
-     * @param Integer id
+     * @param UUID uuid
      * @return bool
      * @throws Exception 
      */
 
-    public boolean update(Patient p,Integer id) throws Exception{
+    public boolean update(Patient p,UUID uuid) throws Exception{
     	
-    	Patient  patient =  (Patient)entityManager.find(Patient.class,id);
+    	Patient  patient = (Patient)entityManager.createQuery("SELECT p FROM Patient p WHERE p.uuid = :uuid").setParameter("uuid", uuid).getSingleResult();
     	 if(patient == null) {
              
          	throw new Exception("No Record found by that id");
@@ -70,13 +70,13 @@ public class PatientService {
     }
     /**
      * Gets a specific patient record
-     * @param id of the patient to view
+     * @param UUID uuid of the patient to view
      * @return
      * @throws Exception
      */
-    public  Patient getPatient(Integer id) throws Exception {
+    public  Patient getPatient(UUID uuid) throws Exception {
     	
-    	Patient patient  = (Patient)entityManager.find(Patient.class,id);
+    	Patient patient  = (Patient)entityManager.createQuery("SELECT p FROM Patient p WHERE p.uuid = :uuid").setParameter("uuid", uuid).getSingleResult();
         if(patient == null) {
                
         	throw new Exception("No Record found by that id");
@@ -101,9 +101,9 @@ public class PatientService {
      * @param uuid id of the specific patient
      * @return bool
      */
-    public  boolean delete(Integer uuid) throws Exception {
+    public  boolean delete(UUID uuid) throws Exception {
     	
-    	Patient  patient =  (Patient)entityManager.find(Patient.class,uuid);
+    	Patient  patient =  (Patient)entityManager.createQuery("SELECT p FROM Patient p WHERE p.uuid = :uuid").setParameter("uuid", uuid).getSingleResult();
     	 if(patient == null) {
              
          	throw new Exception("No Record found by that id");

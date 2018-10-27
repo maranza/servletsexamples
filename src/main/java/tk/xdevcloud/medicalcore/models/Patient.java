@@ -5,6 +5,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Table;
 import javax.persistence.Column;
 import javax.persistence.Id;
+import java.util.UUID;
 import javax.persistence.GenerationType;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -15,7 +16,7 @@ import com.google.gson.annotations.Expose;
 public class Patient implements Serializable  {
 
 	private static final long serialVersionUID = 2256673111627911565L;
-	@Expose(deserialize = false)
+	@Expose(serialize = false)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -28,15 +29,23 @@ public class Patient implements Serializable  {
     @NotNull
     @Column(name = "id_number")
     private String IdNumber;
+    
+    @org.hibernate.annotations.Type(type = "pg-uuid")
+    private UUID uuid;
+    
 
     public Patient(String firstName, String lastName, String IdNumber) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.IdNumber = IdNumber;
+        this.uuid = UUID.randomUUID();
     }
 
     public Patient() {
+    	
+    	   this.uuid = UUID.randomUUID();
     }
+    
 
     public void setFirstName(String firstName) {
 
@@ -52,7 +61,7 @@ public class Patient implements Serializable  {
 
         this.IdNumber = IdNumber;
     }
-
+   
     public String getFirstName() {
 
         return this.firstName;
@@ -71,6 +80,11 @@ public class Patient implements Serializable  {
     public Integer getId() {
     	
     	return this.id;
+    }
+    
+    public UUID getuuid() {
+    	
+    	return this.uuid;
     }
     
     @Override
