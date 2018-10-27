@@ -12,32 +12,31 @@ import javax.servlet.http.HttpServletRequest;
 
 public class AuthenticationFilter implements Filter {
 
-    @Override
-    public void init(FilterConfig filterConfig) throws ServletException {
+	@Override
+	public void init(FilterConfig filterConfig) throws ServletException {
 
-    }
+	}
 
-    @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws java.io.IOException, ServletException {
+	@Override
+	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+			throws java.io.IOException, ServletException {
+         
+		HttpServletRequest httpRequest = (HttpServletRequest) request;
+		HttpSession session = httpRequest.getSession();
+		if (session.isNew()) {
+			response.setContentType("application/json");
+			HttpServletResponse httpResponse = (HttpServletResponse) response;
+			httpResponse.setStatus(HttpServletResponse.SC_FORBIDDEN);
+			httpResponse.getWriter().println("{\"msg\":\"You are not authorized \"}");
+			return;
 
-        HttpServletRequest httpRequest = (HttpServletRequest) request;
-        HttpSession session = httpRequest.getSession(false);
-        if (session.isNew()) {
+		}
+		chain.doFilter(request, response);
+	}
 
-            response.setContentType("application/json");
-            HttpServletResponse httpResponse = (HttpServletResponse) response;
-            httpResponse.getWriter().println("{\"error\":\"You are not authorized \"}");
+	@Override
+	public void destroy() {
 
-            return;
-
-        }
-
-        chain.doFilter(request, response);
-    }
-
-    @Override
-    public void destroy() {
-
-    }
+	}
 
 }

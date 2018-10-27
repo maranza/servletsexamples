@@ -47,7 +47,7 @@ public class PatientServlet extends HttpServlet {
 		} catch (Exception exception) {
 
 			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-			response.getWriter().println("{\"msg\":\"Exception thrown\"}");
+			response.getWriter().println("{\"msg\":\"System Error\"}");
 			logger.info(exception.getMessage());
 		}
 	}

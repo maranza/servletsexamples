@@ -27,6 +27,16 @@ public class AuthenticateServlet extends HttpServlet {
 
             Gson json = new Gson();
             JsonObject jsonObject = json.fromJson(request.getReader(), JsonObject.class);
+            if(!jsonObject.has("username")) {
+            	
+            	response.getWriter().println("{\"error\" : \"username is required\"}");
+            	return;
+            }
+            if(!jsonObject.has("password")) {
+            	
+            	response.getWriter().println("{\"error\" : \"password is required\"}");
+            	return;
+            }
             String username = jsonObject.get("username").getAsString();
             String password = jsonObject.get("password").getAsString();
             if (username.equals("admina") && password.equals("abc123")) {
@@ -36,9 +46,8 @@ public class AuthenticateServlet extends HttpServlet {
                 response.getWriter().println("{\"success\":true}");
 
             } else {
-
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                 response.getWriter().println("{\"success\":false}");
-
                 logger.info("Failed to authenticate ");
             }
 
