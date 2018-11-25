@@ -14,40 +14,57 @@ import org.apache.log4j.Logger;
 import com.google.gson.*;
 import javax.persistence.EntityManager;
 import java.util.UUID;
+import tk.xdevcloud.medicalcore.exceptions.*;
+import javax.validation.*;
+import java.util.Set;
+import tk.xdevcloud.medicalcore.utils.*;
 
 public class PatientServlet extends HttpServlet {
 
 	private static final long serialVersionUID = -1500805539391979323L;
 	private static Logger logger = Logger.getLogger(PatientServlet.class.getName());
-	private static EntityManagerFactory emFactory = Persistence.createEntityManagerFactory("medicaldb");
-	EntityManager manager = emFactory.createEntityManager();
-	private PatientService service = new PatientService(manager);
+	private EntityManagerFactory emFactory;
+	private EntityManager entityManager;
+	private PatientService service;
 
 	public void init() {
+		
+		emFactory = Persistence.createEntityManagerFactory("medicaldb");
+		emFactory =  Persistence.createEntityManagerFactory("medicaldb");
+		entityManager  = emFactory.createEntityManager();
+	    service =  new PatientService(entityManager); 
 
+	
 	}
 
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-
+		
+		reEstablishConnection();
 		// if no parameter was provided return all results
 		response.setContentType("application/json");
 		String uuid = request.getParameter("uuid");
-		Gson json = new Gson();
+		Gson json = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
 		try {
 			if (uuid != null) {
 
-				response.getWriter().println((json.toJson(service.getPatient(UUID.fromString(uuid)))));
+				response.getWriter().println(json.toJson(service.getPatient(UUID.fromString(uuid))));
+				return;
 
 			} else {
 
 				response.getWriter().println(json.toJson(service.getPatients()));
+				return;
 			}
+		} catch (NotFoundException exception) {
+
+			ServletUtil.sendError(exception.getMessage(), response, HttpServletResponse.SC_NOT_FOUND);
+
 		} catch (Exception exception) {
 
-			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-			response.getWriter().println("{\"msg\":\"System Error\"}");
+			ServletUtil.sendError("System Error", response, HttpServletResponse.SC_BAD_REQUEST);
+			exception.printStackTrace();
 			logger.info(exception.getMessage());
 		}
 	}
@@ -56,55 +73,63 @@ public class PatientServlet extends HttpServlet {
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		// Gson json
+		reEstablishConnection();
 		response.setContentType("application/json");
 		try {
-			
-			Gson json = new Gson();
-			JsonObject jsonObject = json.fromJson(request.getReader(), JsonObject.class);
-			
-			String firstName = jsonObject.get("firstName").getAsString();
-			String lastName = jsonObject.get("lastName").getAsString();
-			String IdNumber = jsonObject.get("IdNumber").getAsString();
 
-			Patient patient = new Patient();
-			patient.setFirstName(firstName);
-			patient.setLastName(lastName);
-			patient.setIdNumber(IdNumber);
+			Gson json = new Gson();
+			Patient patient = json.fromJson(request.getReader(), Patient.class);
+			// validate patient data
+			ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+			Validator validator = factory.getValidator();
+			Set<ConstraintViolation<Patient>> constraintViolations = validator.validate(patient);
+			logger.info("Constraint errors " + constraintViolations.size());
+			if (constraintViolations.size() > 0) {
+
+				String error = constraintViolations.iterator().next().getMessage();
+				ServletUtil.sendError(error, response, HttpServletResponse.SC_BAD_REQUEST);
+				return;
+			}
+
 			String uuid = request.getParameter("uuid");
 			// if requestType is update then modify the specific record
-			if (uuid == null ) {
+			if (uuid == null) {
 
 				if (service.add(patient)) {
-					response.getWriter().println("{\"msg\":\"Captured\"}");
+					ServletUtil.sendResponse("Record Added", response);
+					return;
 
 				} else {
-					response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-					response.getWriter().println("{\"msg\":\"Failed to Capture Record\"}");
 
+					ServletUtil.sendError("Failed to Add Record", response, HttpServletResponse.SC_NOT_FOUND);
+					return;
 				}
 			} else {
-				
+
 				if (service.update(patient, UUID.fromString(uuid))) {
 
-					response.getWriter().println("{\"msg\":\"Updated\"}");
+					ServletUtil.sendResponse("Record Updated", response);
+					return;
 				} else {
-					
-					response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-					response.getWriter().println("{\"msg\":\"Failed to Update\"}");
+
+					ServletUtil.sendError("Failed to update", response, HttpServletResponse.SC_BAD_REQUEST);
+					return;
 				}
 
 			}
-			
 
-		} catch (JsonSyntaxException e) {
-			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-			response.getWriter().println("{\"msg\" : \"Failed to Parse Json\"}");
+		} catch (JsonSyntaxException exception) {
+
+			ServletUtil.sendError("Failed to Parse Json", response, HttpServletResponse.SC_BAD_REQUEST);
+
+		} catch (NotFoundException exception) {
+
+			ServletUtil.sendError("Record does not exist", response, HttpServletResponse.SC_NOT_FOUND);
 
 		} catch (Exception e) {
 
-			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+			ServletUtil.sendError("System Error", response, HttpServletResponse.SC_BAD_REQUEST);
 			e.printStackTrace();
-			response.getWriter().println("{\"msg\" : \"System Error Try Again\"}");
 			logger.warn(e.getMessage());
 		}
 	}
@@ -113,6 +138,7 @@ public class PatientServlet extends HttpServlet {
 	protected void doDelete(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		
+		reEstablishConnection();
 		response.setContentType("application/json");
 		String uuid = request.getParameter("uuid");
 		try {
@@ -120,20 +146,37 @@ public class PatientServlet extends HttpServlet {
 
 				if (service.delete(UUID.fromString(uuid))) {
 
-					response.getWriter().println("{\"msg\":\"Deleted\"}");
+					ServletUtil.sendResponse("Deleted", response);
+					return;
 				}
 
+			} else {
+
+				ServletUtil.sendError("Parameter Required", response, HttpServletResponse.SC_BAD_REQUEST);
+				return;
 			}
-			else {
-				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-				response.getWriter().println("{\"msg\":\"Parameter required\"}");
-			}
-		} catch (Exception e) {
-			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-			response.getWriter().println("{\"msg\":\"System Error \"}");
-			logger.info(e.getMessage());
+		} catch (NotFoundException exception) {
+
+			ServletUtil.sendError("Record Does not Exists", response, HttpServletResponse.SC_NOT_FOUND);
+			logger.info(exception.getMessage());
+
+		} catch (Exception exception) {
+
+			ServletUtil.sendError("System Error", response, HttpServletResponse.SC_BAD_REQUEST);
+			logger.info(exception.getMessage());
 		}
 
+	}
+	
+	private void reEstablishConnection() {
+		
+		if(!entityManager.isOpen()) {
+			
+			entityManager  = emFactory.createEntityManager();
+			service.setEntityManager(entityManager);
+		}
+		
+		
 	}
 
 }

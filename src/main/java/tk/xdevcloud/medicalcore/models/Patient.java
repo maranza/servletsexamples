@@ -7,7 +7,7 @@ import javax.persistence.Column;
 import javax.persistence.Id;
 import java.util.UUID;
 import javax.persistence.GenerationType;
-import javax.validation.constraints.NotNull;
+import org.hibernate.validator.constraints.NotEmpty;
 import java.io.Serializable;
 import com.google.gson.annotations.Expose;
 
@@ -16,25 +16,34 @@ import com.google.gson.annotations.Expose;
 public class Patient implements Serializable  {
 
 	private static final long serialVersionUID = 2256673111627911565L;
+	
 	@Expose(serialize = false)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    @NotNull
+	
+	@Expose
+    @NotEmpty(message="First Name is required")
     @Column(name = "first_name")
     private String firstName;
-    @NotNull
+	
+	@Expose
+    @NotEmpty(message="Last Name is required")
     @Column(name = "last_name")
     private String lastName;
-    @NotNull
+	
+	@Expose
+    @NotEmpty(message="Id Number is required")
     @Column(name = "id_number")
     private String IdNumber;
-    
+	
+    @Expose
     @org.hibernate.annotations.Type(type = "pg-uuid")
     private UUID uuid;
     
 
     public Patient(String firstName, String lastName, String IdNumber) {
+    	
         this.firstName = firstName;
         this.lastName = lastName;
         this.IdNumber = IdNumber;
@@ -44,6 +53,7 @@ public class Patient implements Serializable  {
     public Patient() {
     	
     	   this.uuid = UUID.randomUUID();
+    	   
     }
     
 

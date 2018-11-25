@@ -9,6 +9,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletRequest;
+import tk.xdevcloud.medicalcore.utils.*;
 
 public class AuthenticationFilter implements Filter {
 
@@ -23,14 +24,15 @@ public class AuthenticationFilter implements Filter {
          
 		HttpServletRequest httpRequest = (HttpServletRequest) request;
 		HttpSession session = httpRequest.getSession();
-		if (session.isNew()) {
+		
+		if (session.getAttribute("username") == null) {
 			response.setContentType("application/json");
 			HttpServletResponse httpResponse = (HttpServletResponse) response;
-			httpResponse.setStatus(HttpServletResponse.SC_FORBIDDEN);
-			httpResponse.getWriter().println("{\"msg\":\"You are not authorized \"}");
+			ServletUtil.sendError("Access Denied", httpResponse, HttpServletResponse.SC_FORBIDDEN);
 			return;
 
 		}
+	
 		chain.doFilter(request, response);
 	}
 

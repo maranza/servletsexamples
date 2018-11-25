@@ -8,6 +8,7 @@ import javax.servlet.ServletException;
 import java.io.IOException;
 import com.google.gson.*;
 import org.apache.log4j.Logger;
+import tk.xdevcloud.medicalcore.utils.*;
 
 public class AuthenticateServlet extends HttpServlet {
 	/**
@@ -17,49 +18,80 @@ public class AuthenticateServlet extends HttpServlet {
 
 	private static Logger logger = Logger.getLogger(AuthenticateServlet.class.getName());
 
-    public void init() {
-    }
+	public void init() {
+	}
 
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        response.setContentType("application/json");
-        try {
+	@Override
+	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		// logout the session
+		String logout = request.getParameter("logout");
 
-            Gson json = new Gson();
-            JsonObject jsonObject = json.fromJson(request.getReader(), JsonObject.class);
-            if(!jsonObject.has("username")) {
-            	
-            	response.getWriter().println("{\"error\" : \"username is required\"}");
-            	return;
-            }
-            if(!jsonObject.has("password")) {
-            	
-            	response.getWriter().println("{\"error\" : \"password is required\"}");
-            	return;
-            }
-            String username = jsonObject.get("username").getAsString();
-            String password = jsonObject.get("password").getAsString();
-            if (username.equals("admina") && password.equals("abc123")) {
+		if (logout.equals("true")) {
+			request.getSession().invalidate();
+			response.getWriter().println("{\"success\":true}");
+		}
+		else {
+			
+			response.getWriter().println("{\"success\":false}");
+		}
+		
 
-                HttpSession session = request.getSession();
-                session.setAttribute("username", username);
-                response.getWriter().println("{\"success\":true}");
+	}
 
-            } else {
-                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                response.getWriter().println("{\"success\":false}");
-                logger.info("Failed to authenticate ");
-            }
+	@Override
+	protected void doPost(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		response.setContentType("application/json");
+		Gson json = new Gson();
+		String username = null;
+		String password = null;
+		try {
 
-        } catch (JsonSyntaxException e) {
+			JsonObject jsonObject = json.fromJson(request.getReader(), JsonObject.class);
 
-            response.getWriter().println("{\"error\" : \"Failed to Parse Json\"}");
-        } catch (Exception e) {
+			if (jsonObject.has("username")) {
+				username = jsonObject.get("username").getAsString().trim();
+			}
+			if (jsonObject.has("password")) {
+				password = jsonObject.get("password").getAsString().trim();
+			}
 
-            response.getWriter().println("{\"error\" : \"System Error\"}");
-            logger.info(e.getMessage());
-        }
+			if (username == null) {
 
-    }
+				ServletUtil.sendError("Username is required", response, HttpServletResponse.SC_BAD_REQUEST);
+				return;
+			}
+
+			if (password == null) {
+				ServletUtil.sendError("Password  is required", response, HttpServletResponse.SC_BAD_REQUEST);
+				return;
+			}
+
+			if (username.equals("admina") && password.equals("abc123")) {
+
+				HttpSession session = request.getSession();
+				session.setAttribute("username", username);
+				response.getWriter().println("{\"success\":true}");
+
+			} else {
+				response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+				response.getWriter().println("{\"success\":false}");
+				logger.info("Failed to authenticate ");
+			}
+
+		} catch (JsonSyntaxException exception) {
+
+			ServletUtil.sendError("Username and Password  required", response, HttpServletResponse.SC_BAD_REQUEST);
+			logger.info(exception.getMessage());
+		}
+
+		catch (Exception exception) {
+
+			ServletUtil.sendError("System Error", response, HttpServletResponse.SC_BAD_REQUEST);
+			logger.info(exception.getMessage());
+		}
+
+	}
 
 }
