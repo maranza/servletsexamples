@@ -25,22 +25,20 @@ public class PatientServlet extends HttpServlet {
 	private static Logger logger = Logger.getLogger(PatientServlet.class.getName());
 	private EntityManagerFactory emFactory;
 	private EntityManager entityManager;
-	private PatientService service;
+	private PatientService patientService;
 
 	public void init() {
-		
+
 		emFactory = Persistence.createEntityManagerFactory("medicaldb");
-		emFactory =  Persistence.createEntityManagerFactory("medicaldb");
-		entityManager  = emFactory.createEntityManager();
-	    service =  new PatientService(entityManager); 
+		entityManager = emFactory.createEntityManager();
+		patientService = new PatientService(entityManager);
 
-	
 	}
-
+ 
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		
+
 		reEstablishConnection();
 		// if no parameter was provided return all results
 		response.setContentType("application/json");
@@ -49,12 +47,12 @@ public class PatientServlet extends HttpServlet {
 		try {
 			if (uuid != null) {
 
-				response.getWriter().println(json.toJson(service.getPatient(UUID.fromString(uuid))));
+				response.getWriter().println(json.toJson(patientService.getPatient(UUID.fromString(uuid))));
 				return;
 
 			} else {
 
-				response.getWriter().println(json.toJson(service.getPatients()));
+				response.getWriter().println(json.toJson(patientService.getPatients()));
 				return;
 			}
 		} catch (NotFoundException exception) {
@@ -95,7 +93,7 @@ public class PatientServlet extends HttpServlet {
 			// if requestType is update then modify the specific record
 			if (uuid == null) {
 
-				if (service.add(patient)) {
+				if (patientService.add(patient)) {
 					ServletUtil.sendResponse("Record Added", response);
 					return;
 
@@ -106,7 +104,7 @@ public class PatientServlet extends HttpServlet {
 				}
 			} else {
 
-				if (service.update(patient, UUID.fromString(uuid))) {
+				if (patientService.update(patient, UUID.fromString(uuid))) {
 
 					ServletUtil.sendResponse("Record Updated", response);
 					return;
@@ -137,14 +135,14 @@ public class PatientServlet extends HttpServlet {
 	@Override
 	protected void doDelete(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		
+
 		reEstablishConnection();
 		response.setContentType("application/json");
 		String uuid = request.getParameter("uuid");
 		try {
 			if (uuid != null) {
 
-				if (service.delete(UUID.fromString(uuid))) {
+				if (patientService.delete(UUID.fromString(uuid))) {
 
 					ServletUtil.sendResponse("Deleted", response);
 					return;
@@ -167,16 +165,15 @@ public class PatientServlet extends HttpServlet {
 		}
 
 	}
-	
+
 	private void reEstablishConnection() {
-		
-		if(!entityManager.isOpen()) {
-			
-			entityManager  = emFactory.createEntityManager();
-			service.setEntityManager(entityManager);
+
+		if (!entityManager.isOpen()) {
+
+			entityManager = emFactory.createEntityManager();
+			patientService.setEntityManager(entityManager);
 		}
-		
-		
+
 	}
 
 }
