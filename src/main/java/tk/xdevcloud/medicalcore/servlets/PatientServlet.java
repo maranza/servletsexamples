@@ -4,34 +4,26 @@ import javax.servlet.http.HttpServlet;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import tk.xdevcloud.medicalcore.models.Patient;
 import tk.xdevcloud.medicalcore.services.PatientService;
 import org.apache.log4j.Logger;
 import com.google.gson.*;
-import javax.persistence.EntityManager;
 import java.util.UUID;
 import tk.xdevcloud.medicalcore.exceptions.*;
 import javax.validation.*;
 import java.util.Set;
 import tk.xdevcloud.medicalcore.utils.*;
-
+import tk.xdevcloud.medicalcore.listeners.DBManagerListener;
 public class PatientServlet extends HttpServlet {
 
 	private static final long serialVersionUID = -1500805539391979323L;
 	private static Logger logger = Logger.getLogger(PatientServlet.class.getName());
-	private EntityManagerFactory emFactory;
-	private EntityManager entityManager;
-	private PatientService patientService;
+
+	private PatientService patientService = null;
 
 	public void init() {
-
-		emFactory = Persistence.createEntityManagerFactory("medicaldb");
-		entityManager = emFactory.createEntityManager();
-		patientService = new PatientService(entityManager);
 
 	}
  
@@ -39,12 +31,12 @@ public class PatientServlet extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 
-		reEstablishConnection();
 		// if no parameter was provided return all results
 		response.setContentType("application/json");
 		String uuid = request.getParameter("uuid");
 		Gson json = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
 		try {
+			reEstablishConnection();
 			if (uuid != null) {
 
 				response.getWriter().println(json.toJson(patientService.getPatient(UUID.fromString(uuid))));
@@ -71,10 +63,10 @@ public class PatientServlet extends HttpServlet {
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		// Gson json
-		reEstablishConnection();
+	
 		response.setContentType("application/json");
 		try {
-
+			reEstablishConnection();
 			Gson json = new Gson();
 			Patient patient = json.fromJson(request.getReader(), Patient.class);
 			// validate patient data
@@ -135,11 +127,10 @@ public class PatientServlet extends HttpServlet {
 	@Override
 	protected void doDelete(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-
-		reEstablishConnection();
 		response.setContentType("application/json");
 		String uuid = request.getParameter("uuid");
 		try {
+			reEstablishConnection();
 			if (uuid != null) {
 
 				if (patientService.delete(UUID.fromString(uuid))) {
@@ -165,14 +156,18 @@ public class PatientServlet extends HttpServlet {
 		}
 
 	}
+    /**
+     * Reconnect the EntityManager connection if it was closed 
+     * @throws Exception
+     */
+	private void reEstablishConnection() throws Exception {
 
-	private void reEstablishConnection() {
-
-		if (!entityManager.isOpen()) {
-
-			entityManager = emFactory.createEntityManager();
-			patientService.setEntityManager(entityManager);
+		if (patientService == null) {
+            patientService = new PatientService(DBManagerListener.getEntityManager());
 		}
+		else {
+			    patientService.setEntityManager(DBManagerListener.getEntityManager());
+			}
 
 	}
 

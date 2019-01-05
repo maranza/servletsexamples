@@ -8,20 +8,14 @@ import java.util.UUID;
 import tk.xdevcloud.medicalcore.exceptions.*;
 import javax.persistence.NoResultException;
 
-public class PatientService {
+public class PatientService extends DBService {
 
-	private EntityManager entityManager;
 
 	public PatientService(EntityManager entityManager) {
 
-		setEntityManager(entityManager);
+		super(entityManager);
 	}
 	
-	public void setEntityManager(EntityManager entityManager) {
-		
-		this.entityManager = entityManager;
-	}
-
 	/**
 	 * 
 	 * @param patient
