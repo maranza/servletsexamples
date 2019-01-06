@@ -9,16 +9,15 @@ import java.io.IOException;
 import com.google.gson.*;
 import org.apache.log4j.Logger;
 import tk.xdevcloud.medicalcore.utils.*;
-
+import tk.xdevcloud.medicalcore.services.AuthenticateService;
+import tk.xdevcloud.medicalcore.listeners.DBManagerListener;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 public class AuthenticateServlet extends HttpServlet {
-	/**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 4688675195513964816L;
-
 	private static Logger logger = Logger.getLogger(AuthenticateServlet.class.getName());
-
 	public void init() {
+		
 	}
 
 	@Override
@@ -43,11 +42,12 @@ public class AuthenticateServlet extends HttpServlet {
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		response.setContentType("application/json");
+		
 		Gson json = new Gson();
 		String username = null;
 		String password = null;
 		try {
-
+			AuthenticateService authService = new AuthenticateService(DBManagerListener.getEntityManager());
 			JsonObject jsonObject = json.fromJson(request.getReader(), JsonObject.class);
 
 			if (jsonObject.has("username")) {
@@ -56,19 +56,19 @@ public class AuthenticateServlet extends HttpServlet {
 			if (jsonObject.has("password")) {
 				password = jsonObject.get("password").getAsString().trim();
 			}
-
-			if (username == null) {
+			
+			if ((username.equals("")) || (username == null)) {
 
 				ServletUtil.sendError("Username is required", response, HttpServletResponse.SC_BAD_REQUEST);
 				return;
 			}
 
-			if (password == null) {
+			if ((password.equals("") )|| (password == null)) {
 				ServletUtil.sendError("Password  is required", response, HttpServletResponse.SC_BAD_REQUEST);
 				return;
 			}
 
-			if (username.equals("admina") && password.equals("abc123")) {
+			if (authService.verify(username,password)) {
 
 				HttpSession session = request.getSession();
 				session.setAttribute("username", username);
@@ -87,11 +87,12 @@ public class AuthenticateServlet extends HttpServlet {
 		}
 
 		catch (Exception exception) {
-
+            exception.printStackTrace();
 			ServletUtil.sendError("System Error", response, HttpServletResponse.SC_BAD_REQUEST);
 			logger.info(exception.getMessage());
 		}
 
 	}
+	
 
 }
