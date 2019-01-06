@@ -18,7 +18,8 @@ CREATE TABLE admins(
 );
 
 INSERT INTO patients(first_name,last_name,id_number) VALUES('Anabelle','Annabelle','9411210001123');
-INSERT INTO admins(username,password) VALUES('kwasidev','$2y$10$kLPbMCGfqo4JJjQLnbBnOOwN2wUYPHXNzj4QQJ./E5T7riitoD6vm');
+INSERT INTO admins(username,password) VALUES('kwasidev','$2a$10$z/MnFqb6Sq7L7KTvKz8RjOmUqpdds3J8lW1xiiz8QmX8U7JtC9RvG');
+INSERT INTO admins(username,password) VALUES('admina','$2a$10$z/MnFqb6Sq7L7KTvKz8RjOmUqpdds3J8lW1xiiz8QmX8U7JtC9RvG');
 
 CREATE VIEW patients_json AS(
 
