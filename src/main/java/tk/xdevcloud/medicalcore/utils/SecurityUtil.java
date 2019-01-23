@@ -1,4 +1,4 @@
-package tk.xdevcloud.medicalcore.security;
+package tk.xdevcloud.medicalcore.utils;
 
 import javax.crypto.*;
 import java.security.SecureRandom;
