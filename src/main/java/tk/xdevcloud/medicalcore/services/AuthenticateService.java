@@ -1,8 +1,13 @@
 package tk.xdevcloud.medicalcore.services;
 
 import javax.persistence.EntityManager;
-import tk.xdevcloud.medicalcore.models.User;
+
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+import com.google.gson.JsonObject;
+
+import tk.xdevcloud.medicalcore.models.User;
+import tk.xdevcloud.medicalcore.utils.SecurityUtil;
 
 public class AuthenticateService extends DBService {
 
