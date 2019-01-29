@@ -1,23 +1,31 @@
 package tk.xdevcloud.medicalcore.servlets;
 
+import java.io.IOException;
+
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import javax.servlet.ServletException;
-import java.io.IOException;
-import com.google.gson.*;
+
 import org.apache.log4j.Logger;
-import tk.xdevcloud.medicalcore.utils.*;
-import tk.xdevcloud.medicalcore.services.AuthenticateService;
+
+import com.auth0.jwt.exceptions.JWTCreationException;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
+
 import tk.xdevcloud.medicalcore.listeners.DBManagerListener;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import tk.xdevcloud.medicalcore.services.AuthenticateService;
+import tk.xdevcloud.medicalcore.utils.SecurityUtil;
+import tk.xdevcloud.medicalcore.utils.ServletUtil;
+
 public class AuthenticateServlet extends HttpServlet {
 
 	private static final long serialVersionUID = 4688675195513964816L;
 	private static Logger logger = Logger.getLogger(AuthenticateServlet.class.getName());
+
 	public void init() {
-		
+
 	}
 
 	@Override
@@ -27,14 +35,12 @@ public class AuthenticateServlet extends HttpServlet {
 		String logout = request.getParameter("logout");
 
 		if (logout.equals("true")) {
-			request.getSession().invalidate();
+			response.setHeader("token", "");
 			response.getWriter().println("{\"success\":true}");
-		}
-		else {
-			
+		} else {
+
 			response.getWriter().println("{\"success\":false}");
 		}
-		
 
 	}
 
@@ -42,7 +48,7 @@ public class AuthenticateServlet extends HttpServlet {
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		response.setContentType("application/json");
-		
+
 		Gson json = new Gson();
 		String username = null;
 		String password = null;
@@ -56,23 +62,24 @@ public class AuthenticateServlet extends HttpServlet {
 			if (jsonObject.has("password")) {
 				password = jsonObject.get("password").getAsString().trim();
 			}
-			
-			if ((username.equals("")) || (username == null)) {
 
+			if ((username.equals("")) || (username == null)) {
 				ServletUtil.sendError("Username is required", response, HttpServletResponse.SC_BAD_REQUEST);
 				return;
 			}
 
-			if ((password.equals("") )|| (password == null)) {
+			if ((password.equals("")) || (password == null)) {
 				ServletUtil.sendError("Password  is required", response, HttpServletResponse.SC_BAD_REQUEST);
 				return;
 			}
 
-			if (authService.verify(username,password)) {
+			if (authService.verify(username, password)) {
 
-				HttpSession session = request.getSession();
-				session.setAttribute("username", username);
-				response.getWriter().println("{\"success\":true}");
+				String token = SecurityUtil.generateToken(username);
+				if (!token.isEmpty()) {
+					response.setHeader("token", token);
+					response.getWriter().println("{\"success\":true}");
+				}
 
 			} else {
 				response.setStatus(HttpServletResponse.SC_FORBIDDEN);
@@ -80,6 +87,9 @@ public class AuthenticateServlet extends HttpServlet {
 				logger.info("Failed to authenticate ");
 			}
 
+		} catch (JWTCreationException exception) {
+			ServletUtil.sendError("failed to generate access token", response, HttpServletResponse.SC_BAD_REQUEST);
+			logger.info(exception.getMessage());
 		} catch (JsonSyntaxException exception) {
 
 			ServletUtil.sendError("Username and Password  required", response, HttpServletResponse.SC_BAD_REQUEST);
@@ -87,12 +97,11 @@ public class AuthenticateServlet extends HttpServlet {
 		}
 
 		catch (Exception exception) {
-            exception.printStackTrace();
+			exception.printStackTrace();
 			ServletUtil.sendError("System Error", response, HttpServletResponse.SC_BAD_REQUEST);
 			logger.info(exception.getMessage());
 		}
 
 	}
-	
 
 }
